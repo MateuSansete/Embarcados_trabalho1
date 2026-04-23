@@ -57,14 +57,14 @@ def main() -> None:
     """
     args = parse_args()
 
-    print("=" * 60)
-    print("  SISTEMA DE CONTROLE DE SEMÁFOROS — ENTREGA 1")
-    print("  Fundamentos de Sistemas Embarcados (2026/1)")
-    print("=" * 60)
+    print("=" * 60, flush=True)
+    print("  SISTEMA DE CONTROLE DE SEMÁFOROS — ENTREGA 1", flush=True)
+    print("  Fundamentos de Sistemas Embarcados (2026/1)", flush=True)
+    print("=" * 60, flush=True)
 
     # Inicializar GPIO
     gpio = GPIOController()
-    print("[Sistema] GPIO inicializada (modo BCM).")
+    print("[Sistema] GPIO inicializada (modo BCM).", flush=True)
 
     # Lista de modelos ativos para controle de shutdown
     active_models: list = []
@@ -74,27 +74,27 @@ def main() -> None:
         model1 = TrafficLightModel1(gpio)
         model1.start()
         active_models.append(model1)
-        print("[Sistema] Modelo 1 (3 LEDs) iniciado.")
+        print("[Sistema] Modelo 1 (3 LEDs) iniciado.", flush=True)
 
     # --- Modelo 2 ---
     if args.modelo is None or args.modelo == 2:
         model2 = TrafficLightModel2(gpio)
         model2.start()
         active_models.append(model2)
-        print("[Sistema] Modelo 2 (Cruzamento 3-bit) iniciado.")
+        print("[Sistema] Modelo 2 (Cruzamento 3-bit) iniciado.", flush=True)
 
-    print("-" * 60)
-    print("[Sistema] Pressione Ctrl+C para encerrar.")
-    print("-" * 60)
+    print("-" * 60, flush=True)
+    print("[Sistema] Pressione Ctrl+C para encerrar.", flush=True)
+    print("-" * 60, flush=True)
 
     # Handler de sinal para shutdown gracioso
     def shutdown_handler(signum, frame):
         """Trata SIGINT/SIGTERM para encerramento limpo."""
-        print("\n[Sistema] Sinal de encerramento recebido. Parando...")
+        print("\n[Sistema] Sinal de encerramento recebido. Parando...", flush=True)
         for model in active_models:
             model.stop()
         gpio.cleanup()
-        print("[Sistema] GPIO liberada. Encerrando.")
+        print("[Sistema] GPIO liberada. Encerrando.", flush=True)
         sys.exit(0)
 
     signal.signal(signal.SIGINT, shutdown_handler)

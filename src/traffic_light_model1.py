@@ -85,12 +85,12 @@ class TrafficLightModel1(threading.Thread):
 
     def _on_button_principal(self, channel: int) -> None:
         """Callback do botão de pedestre principal (GPIO 1)."""
-        print(f"[Modelo 1] Botão pedestre principal acionado (GPIO {channel})")
+        print(f"[Modelo 1] Botão pedestre principal acionado (GPIO {channel})", flush=True)
         self._pedestrian_requested.set()
 
     def _on_button_cruzamento(self, channel: int) -> None:
         """Callback do botão de pedestre cruzamento (GPIO 12)."""
-        print(f"[Modelo 1] Botão pedestre cruzamento acionado (GPIO {channel})")
+        print(f"[Modelo 1] Botão pedestre cruzamento acionado (GPIO {channel})", flush=True)
         self._pedestrian_requested.set()
 
     # -----------------------------------------------------------------
@@ -135,7 +135,7 @@ class TrafficLightModel1(threading.Thread):
         """
         old_name = self._state.value
         new_name = new_state.value
-        print(f"[Modelo 1] {old_name} → {new_name}")
+        print(f"[Modelo 1] {old_name} → {new_name}", flush=True)
 
         self._state = new_state
         self._state_start = time.monotonic()
@@ -158,7 +158,7 @@ class TrafficLightModel1(threading.Thread):
         self._running.set()
         self._state_start = time.monotonic()
         self._apply_state()
-        print(f"[Modelo 1] Iniciado no estado {self._state.value}")
+        print(f"[Modelo 1] Iniciado no estado {self._state.value}", flush=True)
 
         while self._running.is_set():
             elapsed = time.monotonic() - self._state_start
@@ -207,4 +207,4 @@ class TrafficLightModel1(threading.Thread):
         self._running.clear()
         self.join(timeout=2.0)
         self._set_leds(green=False, yellow=False, red=False)
-        print("[Modelo 1] Encerrado.")
+        print("[Modelo 1] Encerrado.", flush=True)

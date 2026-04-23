@@ -13,9 +13,9 @@ Interpretação dos códigos:
 
 Botões de pedestre:
   - Botão Principal (GPIO 25): solicita abertura da travessia na via principal.
-    → Antecipa o fim do verde do CRUZAMENTO (estado S5).
+    → Se o sinal da via principal está verde, antecipa mudança para amarelo (S1 → S2).
   - Botão Cruzamento (GPIO 22): solicita abertura da travessia na via de cruzamento.
-    → Antecipa o fim do verde PRINCIPAL (estado S1).
+    → Se o sinal da via de cruzamento está verde, antecipa mudança para amarelo (S5 → S6).
 
 Tempos mínimos e máximos são respeitados antes de aceitar antecipação.
 """
@@ -136,9 +136,10 @@ class TrafficLightModel2(threading.Thread):
         Callback do botão de pedestre principal (GPIO 25).
 
         Solicita abertura da travessia na via principal.
-        Efeito: antecipa o fim do verde do CRUZAMENTO (estado S5).
+        Efeito: se o sinal da via principal está verde (S1),
+        antecipa a mudança para amarelo (S2).
         """
-        print(f"[Modelo 2] Botão pedestre principal acionado (GPIO {channel})")
+        print(f"[Modelo 2] Botão pedestre principal acionado (GPIO {channel})", flush=True)
         self._ped_main_requested.set()
 
     def _on_button_cruzamento(self, channel: int) -> None:
@@ -146,9 +147,10 @@ class TrafficLightModel2(threading.Thread):
         Callback do botão de pedestre cruzamento (GPIO 22).
 
         Solicita abertura da travessia na via de cruzamento.
-        Efeito: antecipa o fim do verde PRINCIPAL (estado S1).
+        Efeito: se o sinal da via de cruzamento está verde (S5),
+        antecipa a mudança para amarelo (S6).
         """
-        print(f"[Modelo 2] Botão pedestre cruzamento acionado (GPIO {channel})")
+        print(f"[Modelo 2] Botão pedestre cruzamento acionado (GPIO {channel})", flush=True)
         self._ped_cross_requested.set()
 
     # -----------------------------------------------------------------
@@ -177,7 +179,7 @@ class TrafficLightModel2(threading.Thread):
         """
         old_display = _STATE_DISPLAY_NAME[self._state]
         new_display = _STATE_DISPLAY_NAME[new_state]
-        print(f"[Modelo 2] {old_display} → {new_display}")
+        print(f"[Modelo 2] {old_display} → {new_display}", flush=True)
 
         self._state = new_state
         self._state_start = time.monotonic()
@@ -203,7 +205,8 @@ class TrafficLightModel2(threading.Thread):
         self._apply_state()
         print(
             f"[Modelo 2] Iniciado no estado "
-            f"{_STATE_DISPLAY_NAME[self._state]}"
+            f"{_STATE_DISPLAY_NAME[self._state]}",
+            flush=True,
         )
 
         while self._running.is_set():
@@ -213,16 +216,16 @@ class TrafficLightModel2(threading.Thread):
                 # -------------------------------------------------------
                 # Via principal VERDE (código 1)
                 # Tempo: min 10s, max 20s
-                # Botão cruzamento antecipa (após tempo mínimo)
+                # Botão principal (GPIO 25) antecipa (após tempo mínimo)
                 # -------------------------------------------------------
-                if self._ped_cross_requested.is_set():
+                if self._ped_main_requested.is_set():
                     if elapsed >= M2_MAIN_GREEN_MIN:
-                        self._ped_cross_requested.clear()
+                        self._ped_main_requested.clear()
                         self._transition_to(Model2State.S2_MAIN_YELLOW)
                         continue
 
                 if elapsed >= M2_MAIN_GREEN_MAX:
-                    self._ped_cross_requested.clear()
+                    self._ped_main_requested.clear()
                     self._transition_to(Model2State.S2_MAIN_YELLOW)
                     continue
 
@@ -248,16 +251,16 @@ class TrafficLightModel2(threading.Thread):
                 # -------------------------------------------------------
                 # Via cruzamento VERDE (código 5)
                 # Tempo: min 5s, max 10s
-                # Botão principal antecipa (após tempo mínimo)
+                # Botão cruzamento (GPIO 22) antecipa (após tempo mínimo)
                 # -------------------------------------------------------
-                if self._ped_main_requested.is_set():
+                if self._ped_cross_requested.is_set():
                     if elapsed >= M2_CROSS_GREEN_MIN:
-                        self._ped_main_requested.clear()
+                        self._ped_cross_requested.clear()
                         self._transition_to(Model2State.S6_CROSS_YELLOW)
                         continue
 
                 if elapsed >= M2_CROSS_GREEN_MAX:
-                    self._ped_main_requested.clear()
+                    self._ped_cross_requested.clear()
                     self._transition_to(Model2State.S6_CROSS_YELLOW)
                     continue
 
@@ -295,4 +298,4 @@ class TrafficLightModel2(threading.Thread):
         self.join(timeout=2.0)
         # Estado seguro: tudo vermelho
         self._gpio.write_3bit(self._output_pins, 4)
-        print("[Modelo 2] Encerrado.")
+        print("[Modelo 2] Encerrado.", flush=True)
